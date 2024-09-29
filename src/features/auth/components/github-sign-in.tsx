@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { signIn } from "next-auth/react";
 import React from "react";
+import { signIn } from "@/auth";
 
 export default function GithubSignIn() {
   return (

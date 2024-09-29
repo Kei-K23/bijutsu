@@ -1,9 +1,16 @@
 import { auth } from "@/auth";
 
 export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname !== "/sign-in") {
-    const newUrl = new URL("/sign-in", req.nextUrl.origin);
+  if (!req.auth && req.nextUrl.pathname !== "/auth") {
+    // Unauthenticated user request
+    const newUrl = new URL("/auth", req.nextUrl.origin);
     return Response.redirect(newUrl);
+  } else if (req.auth && req.nextUrl.pathname === "/auth") {
+    // Authenticated user request
+    if (req.nextUrl.pathname === "/auth") {
+      const newUrl = new URL("/", req.nextUrl.origin);
+      return Response.redirect(newUrl);
+    }
   }
 });
 
