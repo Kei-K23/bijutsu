@@ -152,7 +152,7 @@ export const artworks = pgTable("artworks", {
   updatedAt: timestamp("updated_at"),
 });
 
-export const artworksRelations = relations(artworks, ({ one }) => ({
+export const artworksRelations = relations(artworks, ({ one, many }) => ({
   profileInfo: one(profileInfo, {
     fields: [artworks.profileId],
     references: [profileInfo.id],
@@ -161,6 +161,7 @@ export const artworksRelations = relations(artworks, ({ one }) => ({
     fields: [artworks.categoryId],
     references: [categories.id],
   }),
+  artworksToTags: many(artworksToTags),
 }));
 
 export const categories = pgTable("categories", {
@@ -175,17 +176,37 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
   artworks: many(artworks),
 }));
 
-export const tag = pgTable("tags", {
+export const tags = pgTable("tags", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").unique().notNull(),
 });
 
-// export const artworkTags = pgTable("artwork_tags", {
-//   id: text("id")
-//     .primaryKey()
-//     .$defaultFn(() => crypto.randomUUID()),
-//   name: text("name").unique().notNull(),
-//   name: text("name").unique().notNull(),
-// });
+export const tagsRelations = relations(tags, ({ many }) => ({
+  artworksToTags: many(artworksToTags),
+}));
+
+export const artworksToTags = pgTable("artwork_tags", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  artworkId: text("artwork_id")
+    .notNull()
+    .references(() => artworks.id),
+  tagId: text("tag_id")
+    .notNull()
+    .references(() => tags.id),
+  name: text("name").unique().notNull(),
+});
+
+export const artworksToTagsRelations = relations(artworksToTags, ({ one }) => ({
+  artwork: one(artworks, {
+    fields: [artworksToTags.artworkId],
+    references: [artworks.id],
+  }),
+  tag: one(tags, {
+    fields: [artworksToTags.tagId],
+    references: [tags.id],
+  }),
+}));
