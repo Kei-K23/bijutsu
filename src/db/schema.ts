@@ -101,7 +101,7 @@ export const profileInfo = pgTable("profile_info", {
   displayName: text("display_name").unique(),
   image: text("image"),
   bio: text("bio"),
-  role: roleEnum("role").notNull(),
+  role: roleEnum("role").notNull().default("artist"),
   userId: text("user_id").references(() => users.id),
   dateJoined: timestamp("date_joined").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -112,6 +112,10 @@ export const profileInfoRelations = relations(profileInfo, ({ one, many }) => ({
   user: one(users, { fields: [profileInfo.userId], references: [users.id] }),
   artworks: many(artworks),
   comments: many(comments),
+  likes: many(likes),
+  favorites: many(favorites),
+  follower: many(follows),
+  followings: many(follows),
 }));
 
 export const artworkTypeEnum = pgEnum("type", [
@@ -165,6 +169,8 @@ export const artworksRelations = relations(artworks, ({ one, many }) => ({
   }),
   artworksToTags: many(artworksToTags),
   comments: many(comments),
+  likes: many(likes),
+  favorites: many(favorites),
 }));
 
 export const categories = pgTable("categories", {
@@ -270,6 +276,65 @@ export const likesRelations = relations(likes, ({ one }) => ({
   }),
   profile: one(profileInfo, {
     fields: [likes.profileId],
+    references: [profileInfo.id],
+  }),
+}));
+
+export const favorites = pgTable("favorites", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  artworkId: text("artwork_id")
+    .notNull()
+    .references(() => artworks.id),
+  profileId: text("profile_id").references(() => profileInfo.id),
+  dateFavorited: timestamp("date_favorited").defaultNow(),
+});
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  artwork: one(artworks, {
+    fields: [favorites.artworkId],
+    references: [artworks.id],
+  }),
+  profile: one(profileInfo, {
+    fields: [favorites.profileId],
+    references: [profileInfo.id],
+  }),
+}));
+
+export const follows = pgTable("follows", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  followerId: text("follower_id").references(() => profileInfo.id),
+  followingId: text("following_id").references(() => profileInfo.id),
+  dateFollowed: timestamp("date_followed").defaultNow(),
+});
+
+export const followsRelations = relations(follows, ({ one }) => ({
+  follower: one(profileInfo, {
+    fields: [follows.followerId],
+    references: [profileInfo.id],
+  }),
+  following: one(profileInfo, {
+    fields: [follows.followingId],
+    references: [profileInfo.id],
+  }),
+}));
+
+export const notifications = pgTable("notifications", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  profileId: text("profile_id").references(() => profileInfo.id),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").default(false),
+  dateCreated: timestamp("date_created").defaultNow(),
+});
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  profile: one(profileInfo, {
+    fields: [notifications.profileId],
     references: [profileInfo.id],
   }),
 }));
