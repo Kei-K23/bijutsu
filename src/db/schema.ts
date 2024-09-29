@@ -7,6 +7,7 @@ import {
   primaryKey,
   integer,
   pgEnum,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -110,6 +111,7 @@ export const profileInfo = pgTable("profile_info", {
 export const profileInfoRelations = relations(profileInfo, ({ one, many }) => ({
   user: one(users, { fields: [profileInfo.userId], references: [users.id] }),
   artworks: many(artworks),
+  comments: many(comments),
 }));
 
 export const artworkTypeEnum = pgEnum("type", [
@@ -162,6 +164,7 @@ export const artworksRelations = relations(artworks, ({ one, many }) => ({
     references: [categories.id],
   }),
   artworksToTags: many(artworksToTags),
+  comments: many(comments),
 }));
 
 export const categories = pgTable("categories", {
@@ -208,5 +211,65 @@ export const artworksToTagsRelations = relations(artworksToTags, ({ one }) => ({
   tag: one(tags, {
     fields: [artworksToTags.tagId],
     references: [tags.id],
+  }),
+}));
+
+export const comments = pgTable(
+  "comments",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    content: text("content").notNull(),
+    dateCommented: timestamp("date_commented").defaultNow(),
+    artworkId: text("artwork_id")
+      .notNull()
+      .references(() => artworks.id),
+    profileId: text("profile_id").references(() => profileInfo.id),
+    parentCommentId: text("parent_comment_id"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at"),
+  },
+  (table) => {
+    return {
+      parentReference: foreignKey({
+        columns: [table.parentCommentId],
+        foreignColumns: [table.id],
+        name: "contracts_parent_comment_id_fkey",
+      }),
+    };
+  }
+);
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  artwork: one(artworks, {
+    fields: [comments.artworkId],
+    references: [artworks.id],
+  }),
+  profile: one(profileInfo, {
+    fields: [comments.profileId],
+    references: [profileInfo.id],
+  }),
+}));
+
+export const likes = pgTable("likes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  artworkId: text("artwork_id")
+    .notNull()
+    .references(() => artworks.id),
+  profileId: text("profile_id").references(() => profileInfo.id),
+  dateLiked: timestamp("date_liked").defaultNow(),
+});
+
+export const likesRelations = relations(likes, ({ one }) => ({
+  artwork: one(artworks, {
+    fields: [likes.artworkId],
+    references: [artworks.id],
+  }),
+  profile: one(profileInfo, {
+    fields: [likes.profileId],
+    references: [profileInfo.id],
   }),
 }));
