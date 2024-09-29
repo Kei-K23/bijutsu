@@ -117,6 +117,8 @@ export const artworkTypeEnum = pgEnum("type", [
   "Sticker",
   "Painting",
   "Handmade",
+  "Photo",
+  "GIFs",
   "AI Generated",
   "Illustration",
 ]);
